@@ -113,7 +113,7 @@ export async function canUserVoteForProject(
   }
 
   // Check if user is a team member
-  const isTeamMember = project.teamMembers.some(
+  const isTeamMember = (project.teamMembers as any[]).some(
     (tm) => tm.studentUserId === userId,
   );
   if (isTeamMember) {

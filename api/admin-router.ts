@@ -181,7 +181,7 @@ export const adminRouter = createRouter({
           return {
             rank: snapshot.rank ?? "Unranked",
             projectTitle: project?.title ?? "Unknown",
-            team: project?.teamMembers?.map((t) => t.name).join(", ") ?? "",
+            team: (project?.teamMembers as any[])?.map((t) => t.name).join(", ") ?? "",
             category: project?.category ?? "",
             finalScore: snapshot.finalScore,
             facultyScore: snapshot.facultyScore,

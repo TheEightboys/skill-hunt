@@ -68,7 +68,7 @@ const requireFacultyProfile = t.middleware(async (opts) => {
     if (!ctx.user.facultyProfile) {
       throw new TRPCError({ code: "FORBIDDEN", message: "Faculty profile required" });
     }
-    if (!ctx.user.facultyProfile.verifiedByAdmin) {
+    if (!(ctx.user.facultyProfile as any).verifiedByAdmin) {
       throw new TRPCError({ code: "FORBIDDEN", message: "Faculty profile pending verification" });
     }
   }
