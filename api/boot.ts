@@ -10,7 +10,7 @@ const app = new Hono<{ Bindings: HttpBindings }>();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
 
-// API routes first
+// tRPC API routes
 app.use("/api/trpc/*", async (c) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -20,15 +20,16 @@ app.use("/api/trpc/*", async (c) => {
   });
 });
 
-// Only reject unknown /api/* routes — do NOT catch everything else here
+// Catch-all for unknown /api/* routes
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
-// Static files + SPA fallback are registered before the server starts
-if (env.isProduction && !process.env.VERCEL) {
+// In a browser/Node environment (Render, local production), serve static files
+// This runs whenever we are NOT in Vercel serverless environment
+if (!process.env.VERCEL) {
   const { serve } = await import("@hono/node-server");
   const { serveStaticFiles } = await import("./lib/vite.js");
 
-  // Register static + SPA routes BEFORE starting the server
+  // Register static file serving + SPA fallback BEFORE starting server
   serveStaticFiles(app);
 
   const port = parseInt(process.env.PORT || "3000");
