@@ -37,7 +37,14 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 hidden md:inline">{user?.name}</span>
+            
+            {user?.role === "admin" && (
+              <Button size="sm" onClick={() => navigate("/admin")} className="bg-[#0F2A4A]">
+                Admin Panel
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={() => navigate("/projects")}>
+
               <Eye className="w-4 h-4 mr-1" />
               Browse
             </Button>
