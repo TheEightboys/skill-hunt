@@ -10,7 +10,10 @@ let instance: ReturnType<typeof drizzle<typeof fullSchema>>;
 
 export function getDb() {
   if (!instance) {
-    const queryClient = postgres(env.databaseUrl);
+    const queryClient = postgres(env.databaseUrl, {
+      ssl: env.isProduction ? "require" : false,
+      max: 10,
+    });
     instance = drizzle(queryClient, {
       schema: fullSchema,
     });

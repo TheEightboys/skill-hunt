@@ -14,11 +14,11 @@ export async function createContext(
   const ctx: TrpcContext = { req: opts.req, resHeaders: opts.resHeaders };
   try {
     const { data: auth, error } = await verifyAuth(opts.req, {
-      auth: "user",
+      auth: ["user", "none"],
     });
 
     if (error) {
-      console.error("[context] verifyAuth error:", error);
+      console.warn("[context] verifyAuth warning:", error.message);
     } else if (auth && auth.userClaims) {
       console.log("[context] verifyAuth success, user:", auth.userClaims.id);
       const email = auth.userClaims.email || "";
