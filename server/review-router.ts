@@ -11,7 +11,7 @@ export const reviewRouter = createRouter({
       return reviewService.getReviewsForProject(input.projectId);
     }),
 
-  forFaculty: authedQuery.query(async ({ ctx }) => {
+  forFaculty: authedQuery.input(z.any().optional()).query(async ({ ctx }) => {
     return reviewService.getReviewsForFaculty(ctx.user.id);
   }),
 

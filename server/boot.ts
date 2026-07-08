@@ -54,7 +54,7 @@ export const DELETE = handler;
 export const OPTIONS = handler;
 
 // ── Start Node server on Render / local ─────────────────────
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && process.env.NODE_ENV === "production") {
   const port = parseInt(process.env.PORT || "3000");
   serve({ fetch: app.fetch, port }, () => {
     console.log(`Server running on http://localhost:${port}/`);

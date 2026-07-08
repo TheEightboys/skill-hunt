@@ -7,8 +7,10 @@ import { leaderboardRouter } from "./leaderboard-router.js";
 import { adminRouter } from "./admin-router.js";
 import { createRouter, publicQuery } from "./middleware.js";
 
+import { z } from "zod";
+
 export const appRouter = createRouter({
-  ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
+  ping: publicQuery.input(z.any().optional()).query(() => ({ ok: true, ts: Date.now() })),
   auth: authRouter,
   event: eventRouter,
   project: projectRouter,

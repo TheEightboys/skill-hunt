@@ -4,11 +4,11 @@ import * as eventService from "./services/event.service.js";
 import { recomputeEventScores } from "./services/scoring/recompute-event-leaderboard.js";
 
 export const eventRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: publicQuery.input(z.any().optional()).query(async () => {
     return eventService.getAllEvents();
   }),
 
-  active: publicQuery.query(async () => {
+  active: publicQuery.input(z.any().optional()).query(async () => {
     return eventService.getActiveEvent();
   }),
 
@@ -125,7 +125,7 @@ export const eventRouter = createRouter({
       return eventService.publishEventResults(input.eventId);
     }),
 
-  dashboardStats: adminQuery.query(async () => {
+  dashboardStats: adminQuery.input(z.any().optional()).query(async () => {
     return eventService.getAdminDashboardStats();
   }),
 });

@@ -6,7 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { recomputeEventScores } from "./services/scoring/recompute-event-leaderboard.js";
 
 export const adminRouter = createRouter({
-  users: adminQuery.query(async () => {
+  users: adminQuery.input(z.any().optional()).query(async () => {
     return getDb().query.users.findMany({
       orderBy: [desc(schema.users.createdAt)],
       with: {
@@ -35,7 +35,7 @@ export const adminRouter = createRouter({
       return { success: true };
     }),
 
-  pendingFaculty: adminQuery.query(async () => {
+  pendingFaculty: adminQuery.input(z.any().optional()).query(async () => {
     return getDb().query.facultyProfiles.findMany({
       where: eq(schema.facultyProfiles.verifiedByAdmin, false),
       with: {
