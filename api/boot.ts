@@ -32,7 +32,7 @@ export const PATCH = handler;
 export const DELETE = handler;
 export const OPTIONS = handler;
 
-if (env.isProduction) {
+if (env.isProduction && !process.env.VERCEL) {
   const { serve } = await import("@hono/node-server");
   const { serveStaticFiles } = await import("./lib/vite.js");
   serveStaticFiles(app);
