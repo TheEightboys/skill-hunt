@@ -5,6 +5,21 @@ import type { TrpcContext } from "./context.js";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  errorFormatter({ shape, error }) {
+    let message = error.message;
+    if (error.cause && typeof error.cause === "object") {
+      const cause = error.cause as any;
+      if (cause.severity && (cause.detail || cause.message)) {
+        message = `${error.message} (Postgres: ${cause.severity} - ${cause.detail || cause.message} [code: ${cause.code}])`;
+      } else if (cause.message) {
+        message = `${error.message} (Cause: ${cause.message})`;
+      }
+    }
+    return {
+      ...shape,
+      message,
+    };
+  },
 });
 
 export const createRouter = t.router;
