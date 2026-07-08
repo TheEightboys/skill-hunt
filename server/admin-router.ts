@@ -6,7 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { recomputeEventScores } from "./services/scoring/recompute-event-leaderboard.js";
 
 export const adminRouter = createRouter({
-  events: adminQuery.query(async () => {
+  events: adminQuery.input(z.any().optional()).query(async () => {
     return getDb().query.events.findMany({
       orderBy: [desc(schema.events.createdAt)],
     });
