@@ -73,6 +73,35 @@ export default function AdminPage() {
   );
 
   const utils = trpc.useUtils();
+
+  const handleExportCSV = async () => {
+    if (!activeEvent) return;
+    try {
+      const data = await utils.admin.exportLeaderboard.fetch({ eventId: activeEvent.id });
+      if (!data || data.length === 0) {
+        alert("No data available to export.");
+        return;
+      }
+      const headers = Object.keys(data[0]).join(",");
+      const rows = data.map((row) => 
+        Object.values(row).map(val => 
+          typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
+        ).join(",")
+      );
+      const csvContent = [headers, ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `skillhunt_report_event_${activeEvent.id}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to export report.");
+    }
+  };
   const recomputeMutation = trpc.admin.recomputeScores.useMutation({
     onSuccess: () => {
       utils.leaderboard.preview.invalidate();
@@ -682,7 +711,7 @@ export default function AdminPage() {
                       <p className="text-gray-500 mt-2 max-w-md text-center">
                         Production-ready charts, historical tracking, and exportable PDF/CSV reports are continuously generating from the active dataset.
                       </p>
-                      <Button className="mt-6 bg-[#0F2A4A] shadow-sm">Generate Full Report</Button>
+                      <Button onClick={handleExportCSV} className="mt-6 bg-[#0F2A4A] shadow-sm">Generate Full Report</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -787,7 +816,7 @@ export default function AdminPage() {
                         </div>
                       </Button>
                       
-                      <Button className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-blue-200 hover:border-blue-300 shadow-sm bg-white hover:bg-blue-50" variant="ghost">
+                      <Button onClick={handleExportCSV} className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-blue-200 hover:border-blue-300 shadow-sm bg-white hover:bg-blue-50" variant="ghost">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                           <BarChart3 className="w-5 h-5 text-blue-600" />
                         </div>
@@ -799,7 +828,7 @@ export default function AdminPage() {
                       
                       <Separator className="my-6" />
                       
-                      <Button className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-red-200 hover:border-red-300 shadow-sm bg-white hover:bg-red-50" variant="ghost">
+                      <Button onClick={() => alert("Event purging is disabled in this demo environment to protect data integrity.")} className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-red-200 hover:border-red-300 shadow-sm bg-white hover:bg-red-50" variant="ghost">
                         <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                           <AlertTriangle className="w-5 h-5 text-red-600" />
                         </div>
