@@ -6,6 +6,36 @@ import { eq, desc } from "drizzle-orm";
 import { recomputeEventScores } from "./services/scoring/recompute-event-leaderboard.js";
 
 export const adminRouter = createRouter({
+  events: adminQuery.query(async () => {
+    return getDb().query.events.findMany({
+      orderBy: [desc(schema.events.createdAt)],
+    });
+  }),
+  
+  evaluations: adminQuery.input(z.object({ eventId: z.number().optional() }).optional()).query(async ({ input }) => {
+    const whereClause = input?.eventId ? eq(schema.facultyReviews.eventId, input.eventId) : undefined;
+    return getDb().query.facultyReviews.findMany({
+      where: whereClause,
+      with: {
+        faculty: { with: { user: true } },
+        project: true,
+      },
+      orderBy: [desc(schema.facultyReviews.submittedAt)],
+    });
+  }),
+  
+  votes: adminQuery.input(z.object({ eventId: z.number().optional() }).optional()).query(async ({ input }) => {
+    const whereClause = input?.eventId ? eq(schema.peerVotes.eventId, input.eventId) : undefined;
+    return getDb().query.peerVotes.findMany({
+      where: whereClause,
+      with: {
+        voter: true,
+        project: true,
+      },
+      orderBy: [desc(schema.peerVotes.createdAt)],
+    });
+  }),
+
   users: adminQuery.input(z.any().optional()).query(async () => {
     return getDb().query.users.findMany({
       orderBy: [desc(schema.users.createdAt)],
