@@ -5,11 +5,12 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router.js";
 import { createContext } from "./context.js";
 import { env } from "./lib/env.js";
-import { Paths } from "../contracts/constants.js";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
+
+// API routes first
 app.use("/api/trpc/*", async (c) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -18,7 +19,23 @@ app.use("/api/trpc/*", async (c) => {
     createContext,
   });
 });
+
+// Only reject unknown /api/* routes — do NOT catch everything else here
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
+
+// Static files + SPA fallback are registered before the server starts
+if (env.isProduction && !process.env.VERCEL) {
+  const { serve } = await import("@hono/node-server");
+  const { serveStaticFiles } = await import("./lib/vite.js");
+
+  // Register static + SPA routes BEFORE starting the server
+  serveStaticFiles(app);
+
+  const port = parseInt(process.env.PORT || "3000");
+  serve({ fetch: app.fetch, port }, () => {
+    console.log(`Server running on http://localhost:${port}/`);
+  });
+}
 
 export default app;
 
@@ -31,14 +48,3 @@ export const PUT = handler;
 export const PATCH = handler;
 export const DELETE = handler;
 export const OPTIONS = handler;
-
-if (env.isProduction && !process.env.VERCEL) {
-  const { serve } = await import("@hono/node-server");
-  const { serveStaticFiles } = await import("./lib/vite.js");
-  serveStaticFiles(app);
-
-  const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
-}
