@@ -43,6 +43,11 @@ export default function Dashboard() {
                 Admin Panel
               </Button>
             )}
+            {(user?.role === "admin" || user?.facultyProfile) && (
+              <Button size="sm" onClick={() => navigate("/faculty")} variant="secondary">
+                Faculty Portal
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={() => navigate("/projects")}>
 
               <Eye className="w-4 h-4 mr-1" />
