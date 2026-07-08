@@ -17,7 +17,7 @@ export const adminRouter = createRouter({
     return getDb().query.facultyReviews.findMany({
       where: whereClause,
       with: {
-        faculty: { with: { user: true } },
+        faculty: true,
         project: true,
       },
       orderBy: [desc(schema.facultyReviews.submittedAt)],

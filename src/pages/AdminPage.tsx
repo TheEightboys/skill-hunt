@@ -488,7 +488,7 @@ export default function AdminPage() {
                         <tbody className="divide-y divide-gray-100 bg-white">
                           {evaluations?.map((ev: any) => (
                             <tr key={ev.id} className="hover:bg-gray-50/80 transition-colors">
-                              <td className="p-4 pl-6 font-semibold text-gray-900">{ev.faculty?.user?.name || "Unknown"}</td>
+                              <td className="p-4 pl-6 font-semibold text-gray-900">{ev.faculty?.name || "Unknown"}</td>
                               <td className="p-4 font-medium text-[#0F2A4A]">{ev.project?.title || "Unknown"}</td>
                               <td className="p-4 text-center">
                                 <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-base">
