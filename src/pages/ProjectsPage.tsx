@@ -8,7 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
-import { Code2, Search, GitBranch, ExternalLink, Vote } from "lucide-react";
+import { Code2, Search, GitBranch, ExternalLink, Vote, Cpu, Globe, Zap, Database, Layers, Bot } from "lucide-react";
+
+const CATEGORY_STYLES: Record<string, { gradient: string; icon: React.ElementType }> = {
+  "Mobile App":      { gradient: "from-purple-600 to-indigo-700", icon: Zap },
+  "Backend System":  { gradient: "from-gray-800 to-slate-700",   icon: Database },
+  "Web Application": { gradient: "from-cyan-600 to-blue-700",    icon: Globe },
+  "IoT":             { gradient: "from-green-600 to-teal-700",    icon: Cpu },
+  "Machine Learning":{ gradient: "from-orange-600 to-rose-700",  icon: Bot },
+  "default":         { gradient: "from-[#0F2A4A] to-[#22B8CF]",  icon: Layers },
+};
+
+function getCardStyle(category?: string | null) {
+  return CATEGORY_STYLES[category ?? ""] ?? CATEGORY_STYLES["default"];
+}
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
@@ -130,7 +143,7 @@ export default function ProjectsPage() {
                   className="group cursor-pointer hover:shadow-lg transition-all border-0 shadow-md overflow-hidden flex flex-col h-full"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <div className="h-48 bg-gradient-to-br from-[#0F2A4A] to-[#22B8CF] flex items-center justify-center relative overflow-hidden shrink-0">
+                  <div className={`h-48 bg-gradient-to-br ${getCardStyle(project.category).gradient} flex items-center justify-center relative overflow-hidden shrink-0`}>
                     {thumbnail ? (
                       <img 
                         src={thumbnail} 
@@ -138,7 +151,9 @@ export default function ProjectsPage() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                     ) : (
-                      <Code2 className="w-10 h-10 text-white/30" />
+                      <div className="flex flex-col items-center gap-2 opacity-30">
+                        {(() => { const Icon = getCardStyle(project.category).icon; return <Icon className="w-12 h-12 text-white" />; })()}
+                      </div>
                     )}
                     {project.previewStatus === "live" && (
                       <Badge className="absolute top-3 right-3 bg-green-500 text-white text-xs">
@@ -160,9 +175,10 @@ export default function ProjectsPage() {
                     <h3 className="font-semibold text-[#0F2A4A] mb-2 line-clamp-2 group-hover:text-[#22B8CF] transition-colors">
                       {project.title}
                     </h3>
-                    <p className="text-sm text-gray-500 line-clamp-4 mb-4 flex-1">{project.abstract}</p>
+                    <p className="text-sm text-gray-500 line-clamp-5 mb-3 flex-1">{project.abstract}</p>
                     <div className="flex items-center justify-between text-xs text-gray-400 mt-auto pt-3 border-t border-gray-100">
                       <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-400 font-medium">{project.department}</span>
                         {project.githubUrl && (
                           <span className="flex items-center gap-1">
                             <GitBranch className="w-3 h-3" />

@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Code2, Star, ClipboardCheck, ArrowRight, BarChart3, Clock, ShieldCheck } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
@@ -269,9 +270,9 @@ export default function FacultyDashboard() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Projects to Review */}
-          <div>
+          <div className="lg:col-span-2">
             <h2 className="text-xl font-bold text-[#0F2A4A] mb-4">Projects to Review</h2>
             {reviewableProjects && reviewableProjects.length > 0 ? (
               <div className="space-y-3">
@@ -355,6 +356,7 @@ export default function FacultyDashboard() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
