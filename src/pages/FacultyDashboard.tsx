@@ -14,7 +14,7 @@ import Footer from "@/components/Footer";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
-  const { user, isLoading, refresh } = useAuth({ redirectOnUnauthenticated: false });
+  const { user, isLoading, refresh, logout } = useAuth({ redirectOnUnauthenticated: false });
   const [isRedirecting, setIsRedirecting] = useState(false);
   const utils = trpc.useUtils();
   
@@ -130,8 +130,8 @@ export default function FacultyDashboard() {
             >
               Submit Application
             </Button>
-            <Button variant="outline" className="w-full" onClick={() => navigate("/dashboard")}>
-              Return to Dashboard
+            <Button variant="outline" className="w-full" onClick={logout}>
+              Sign Out
             </Button>
           </CardContent>
         </Card>
@@ -151,8 +151,8 @@ export default function FacultyDashboard() {
               Your application for faculty access is currently being reviewed by an administrator.
               You will be able to review projects once verified.
             </p>
-            <Button variant="outline" onClick={() => navigate("/dashboard")}>
-              Return to Dashboard
+            <Button variant="outline" onClick={logout}>
+              Sign Out
             </Button>
           </CardContent>
         </Card>
