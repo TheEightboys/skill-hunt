@@ -221,7 +221,10 @@ export default function AdminPage() {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="border-t p-4">
-            <Button variant="outline" className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors" onClick={() => navigate("/dashboard")}>
+            <Button variant="outline" className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors" onClick={() => {
+              sessionStorage.setItem("fromAdmin", "true");
+              navigate("/dashboard");
+            }}>
               <LogOut className="w-4 h-4 mr-2" /> Exit Admin
             </Button>
           </SidebarFooter>

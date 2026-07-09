@@ -47,10 +47,13 @@ export default function Dashboard() {
         setIsRedirecting(true);
         navigate("/faculty", { replace: true });
       }
-      // Admin users go to /admin
-      if (user.role === "admin") {
-        setIsRedirecting(true);
-        navigate("/admin", { replace: true });
+      // Admin users go to /admin unless they explicitly navigated away from it
+      if (user.role === "admin" && window.location.pathname === "/dashboard") {
+        const fromAdmin = sessionStorage.getItem("fromAdmin");
+        if (!fromAdmin) {
+          setIsRedirecting(true);
+          navigate("/admin", { replace: true });
+        }
       }
     }
   }, [isLoading, user, isRedirecting, navigate]);
