@@ -24,6 +24,7 @@ export async function createContext(
       const email = auth.userClaims.email || "";
       const name = (auth.userClaims.userMetadata?.name as string) || email.split("@")[0] || "User";
       const avatar = (auth.userClaims.userMetadata?.avatar_url as string) || "";
+      const userType = (auth.userClaims.userMetadata?.user_type as string) || "student";
       
       await upsertUser({
         unionId: auth.userClaims.id,
@@ -33,6 +34,9 @@ export async function createContext(
         lastSignInAt: new Date(),
       });
       ctx.user = await findUserByUnionId(auth.userClaims.id);
+      if (ctx.user) {
+        (ctx.user as any).signupUserType = userType;
+      }
     }
   } catch (err) {
     console.error("[context] Auth exception caught:", err);

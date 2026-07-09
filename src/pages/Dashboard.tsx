@@ -36,16 +36,22 @@ export default function Dashboard() {
   // Handle role-based routing based on user type from signup
   React.useEffect(() => {
     if (!isLoading && user && !isRedirecting) {
-      // Check if this is a faculty user (has faculty profile OR signed up as faculty)
-      const isIntendedFaculty = user.facultyProfile || ((user as any).raw_user_meta_data?.user_type === "faculty");
-      
+      // Check if this is a faculty user:
+      // 1. Has a faculty profile in DB
+      // 2. Signed up with user_type=faculty (passed via signupUserType from Supabase metadata)
+      const isIntendedFaculty =
+        user.facultyProfile ||
+        (user as any).signupUserType === "faculty";
+
       if (isIntendedFaculty && user.role !== "admin") {
-        // Faculty users should go to faculty dashboard
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsRedirecting(true);
         navigate("/faculty", { replace: true });
       }
-      // Student users stay on dashboard (no redirect needed)
+      // Admin users go to /admin
+      if (user.role === "admin") {
+        setIsRedirecting(true);
+        navigate("/admin", { replace: true });
+      }
     }
   }, [isLoading, user, isRedirecting, navigate]);
 
