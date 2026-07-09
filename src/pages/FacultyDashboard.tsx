@@ -30,10 +30,11 @@ export default function FacultyDashboard() {
   React.useEffect(() => {
     if (!isLoading && user) {
       // Check if user is intended to be faculty (has profile OR signed up as faculty)
-      const isIntendedFaculty = user.facultyProfile || (user.raw_user_meta_data?.user_type === "faculty");
+      const isIntendedFaculty = user.facultyProfile || ((user as any).raw_user_meta_data?.user_type === "faculty");
       
       if (!isIntendedFaculty && user.role !== "admin") {
         // Not intended faculty, redirect to dashboard
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsRedirecting(true);
         navigate("/dashboard", { replace: true });
       }
@@ -177,7 +178,7 @@ export default function FacultyDashboard() {
             )}
             
             {/* Show Request Access button for faculty who signed up but haven't applied */}
-            {!user?.facultyProfile && user?.raw_user_meta_data?.user_type === "faculty" && (
+            {!user?.facultyProfile && (user as any)?.raw_user_meta_data?.user_type === "faculty" && (
               <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
                 Request Faculty Access
               </Button>

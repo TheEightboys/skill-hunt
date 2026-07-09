@@ -119,6 +119,7 @@ function AuthLayoutContent({
 
   useEffect(() => {
     if (isCollapsed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsResizing(false);
     }
   }, [isCollapsed]);

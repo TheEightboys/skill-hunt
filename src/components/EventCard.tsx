@@ -1,8 +1,8 @@
-import { useState } from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Upload, Eye, Trophy, Check, Clock, AlertCircle } from "lucide-react";
+import { Calendar, Users, Upload, Eye, Trophy, Check, Clock } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
 

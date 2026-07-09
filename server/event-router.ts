@@ -4,23 +4,23 @@ import * as eventService from "./services/event.service.js";
 import { recomputeEventScores } from "./services/scoring/recompute-event-leaderboard.js";
 
 export const eventRouter = createRouter({
-  list: publicQuery.input(z.any().optional()).query(async () => {
+  list: publicQuery.query(async () => {
     return eventService.getAllEvents();
   }),
 
-  active: publicQuery.input(z.any().optional()).query(async () => {
+  active: publicQuery.query(async () => {
     return eventService.getActiveEvent();
   }),
 
-  activeEvents: publicQuery.input(z.any().optional()).query(async () => {
+  activeEvents: publicQuery.query(async () => {
     return eventService.getActiveEvents();
   }),
 
-  completed: publicQuery.input(z.any().optional()).query(async () => {
+  completed: publicQuery.query(async () => {
     return eventService.getCompletedEvents();
   }),
 
-  myRegistrations: authedQuery.input(z.any().optional()).query(async ({ ctx }) => {
+  myRegistrations: authedQuery.query(async ({ ctx }) => {
     return eventService.getUserEventRegistrations(ctx.user.id);
   }),
 
@@ -162,7 +162,7 @@ export const eventRouter = createRouter({
       return eventService.publishEventResults(input.eventId);
     }),
 
-  dashboardStats: adminQuery.input(z.any().optional()).query(async () => {
+  dashboardStats: adminQuery.query(async () => {
     return eventService.getAdminDashboardStats();
   }),
 });

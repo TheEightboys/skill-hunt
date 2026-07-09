@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { getDb } from "../queries/connection.js";
 import * as schema from "../../db/schema.js";
 import { DEFAULT_RUBRIC_CRITERIA } from "../../contracts/constants.js";
@@ -12,7 +12,7 @@ export async function getAllEvents() {
 
 export async function getActiveEvents() {
   const db = getDb();
-  const now = new Date();
+
   
   return db.query.events.findMany({
     where: and(

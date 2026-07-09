@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, Users, Trophy, FileText, Eye, Vote, TrendingUp } from "lucide-react";
+import { Users, FileText, Eye, Vote } from "lucide-react";
 
 interface EventAnalytics {
   eventId: number;

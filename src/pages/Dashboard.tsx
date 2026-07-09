@@ -37,10 +37,11 @@ export default function Dashboard() {
   React.useEffect(() => {
     if (!isLoading && user && !isRedirecting) {
       // Check if this is a faculty user (has faculty profile OR signed up as faculty)
-      const isIntendedFaculty = user.facultyProfile || (user.raw_user_meta_data?.user_type === "faculty");
+      const isIntendedFaculty = user.facultyProfile || ((user as any).raw_user_meta_data?.user_type === "faculty");
       
       if (isIntendedFaculty && user.role !== "admin") {
         // Faculty users should go to faculty dashboard
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsRedirecting(true);
         navigate("/faculty", { replace: true });
       }

@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EventCard } from "@/components/EventCard";
-import { Trophy, Calendar, Code2, Users, UploadCloud, ChevronRight, ExternalLink, Menu, Upload, Eye } from "lucide-react";
+import { Trophy, Calendar, Users, UploadCloud, ChevronRight, ExternalLink, Menu, Upload, Eye } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { data: activeEvent } = trpc.event.active.useQuery();
   const { data: activeEvents } = trpc.event.activeEvents.useQuery();
   

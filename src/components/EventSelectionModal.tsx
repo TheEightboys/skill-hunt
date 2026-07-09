@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,8 +49,6 @@ export function EventSelectionModal({ open, onOpenChange, onSelectionComplete }:
   };
 
   const registeredIds = myRegistrations?.map((e) => e.id) ?? [];
-  const availableEvents = activeEvents?.filter((e) => !registeredIds.includes(e.id)) ?? [];
-  const unregisteredCount = activeEvents?.length ?? 0 - (myRegistrations?.length ?? 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

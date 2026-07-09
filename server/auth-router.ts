@@ -5,8 +5,8 @@ import { getDb } from "./queries/connection.js";
 import * as schema from "../db/schema.js";
 
 export const authRouter = createRouter({
-  me: authedQuery.input(z.any().optional()).query(({ ctx }) => ctx.user),
-  logout: authedQuery.input(z.any().optional()).mutation(async () => {
+  me: authedQuery.query(({ ctx }) => ctx.user),
+  logout: authedQuery.mutation(async () => {
     return { success: true };
   }),
   applyFaculty: authedQuery
