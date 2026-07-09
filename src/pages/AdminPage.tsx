@@ -143,7 +143,7 @@ export default function AdminPage() {
   const [eventForm, setEventForm] = useState({
     name: "", slug: "", description: "", status: "draft" as any,
     registrationStartAt: "", submissionDeadline: "", votingStartAt: "", reviewDeadline: "",
-    isActive: false,
+    isActive: false, isPublic: false,
   });
 
   const buildEventPayload = () => {
@@ -516,7 +516,7 @@ export default function AdminPage() {
                     <Button
                       className="bg-[#0F2A4A] hover:bg-[#0d223d] shadow-sm"
                       onClick={() => {
-                        setEventForm({ name: "", slug: "", description: "", status: "draft", registrationStartAt: "", submissionDeadline: "", votingStartAt: "", reviewDeadline: "", isActive: false });
+                        setEventForm({ name: "", slug: "", description: "", status: "draft", registrationStartAt: "", submissionDeadline: "", votingStartAt: "", reviewDeadline: "", isActive: false, isPublic: false });
                         setIsCreateEventOpen(true);
                       }}
                     >
@@ -581,6 +581,7 @@ export default function AdminPage() {
                                     votingStartAt: e.votingStartAt ? new Date(e.votingStartAt).toISOString().slice(0, 16) : "",
                                     reviewDeadline: e.reviewDeadline ? new Date(e.reviewDeadline).toISOString().slice(0, 16) : "",
                                     isActive: e.isActive || false,
+                                    isPublic: e.isPublic || false,
                                   });
                                   setEditingEventId(e.id);
                                 }}
@@ -983,6 +984,18 @@ export default function AdminPage() {
                 <Label>Description</Label>
                 <Input value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} placeholder="Short description..." />
               </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={eventForm.isPublic || false}
+                    onChange={(e) => setEventForm({ ...eventForm, isPublic: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  Make Event Public
+                </Label>
+                <p className="text-xs text-gray-500">Public events are visible to users. If unchecked, the event is hidden.</p>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-xs">Registration Start</Label>
@@ -1057,6 +1070,18 @@ export default function AdminPage() {
                   Set as Active Event
                 </Label>
                 <p className="text-xs text-gray-500">Only one event should be active at a time. This will be the primary event shown across the site.</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={eventForm.isPublic || false}
+                    onChange={(e) => setEventForm({ ...eventForm, isPublic: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  Make Event Public
+                </Label>
+                <p className="text-xs text-gray-500">Public events are visible to users. If unchecked, the event is hidden.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
