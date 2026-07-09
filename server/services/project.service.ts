@@ -28,14 +28,21 @@ export async function getProjects(filters?: {
   if (conditions.length === 0) {
     return db.query.projects.findMany({
       orderBy: [desc(schema.projects.createdAt)],
+      with: {
+        screenshots: true,
+        teamMembers: true,
+      },
     });
   }
 
-  return db
-    .select()
-    .from(schema.projects)
-    .where(and(...conditions))
-    .orderBy(desc(schema.projects.createdAt));
+  return db.query.projects.findMany({
+    where: and(...conditions),
+    orderBy: [desc(schema.projects.createdAt)],
+    with: {
+      screenshots: true,
+      teamMembers: true,
+    },
+  });
 }
 
 export async function getProjectById(id: number) {
