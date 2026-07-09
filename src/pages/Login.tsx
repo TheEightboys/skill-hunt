@@ -13,6 +13,7 @@ export default function Login() {
   const [isSignUp, setIsSignUp] = useState(location.pathname === "/register");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState<"student" | "faculty">("student");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,14 +22,27 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            data: {
+              user_type: userType // Store user type in Supabase user metadata
+            }
+          }
+        });
         if (error) throw error;
         // On success, they might need to confirm email or just log in directly
         setErrorMsg("Sign up successful! Please check your email to verify your account if required, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        window.location.href = "/dashboard";
+        
+        // Wait a moment for session to be established, then redirect to dashboard
+        // Dashboard will handle role-based routing based on user profile
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 500);
       }
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during authentication.");
@@ -63,6 +77,35 @@ export default function Login() {
           )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-3">
+                <Label>I am a:</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setUserType("student")}
+                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                      userType === "student"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType("faculty")}
+                    className={`p-3 border rounded-lg text-sm font-medium transition-colors ${
+                      userType === "faculty"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    Faculty
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input 

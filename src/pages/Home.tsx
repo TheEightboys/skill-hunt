@@ -4,13 +4,15 @@ import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, Code2, Users, UploadCloud, ChevronRight, ExternalLink, Menu } from "lucide-react";
+import { EventCard } from "@/components/EventCard";
+import { Trophy, Calendar, Code2, Users, UploadCloud, ChevronRight, ExternalLink, Menu, Upload, Eye } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function Home() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { data: activeEvent } = trpc.event.active.useQuery();
+  const { data: activeEvents } = trpc.event.activeEvents.useQuery();
   
   const { data: leaderboard } = trpc.leaderboard.public.useQuery(
     activeEvent ? { eventId: activeEvent.id } : { eventId: 0 },
@@ -18,6 +20,52 @@ export default function Home() {
   );
 
   const topProjects = leaderboard?.slice(0, 5) ?? [];
+
+  // Get date-based status for active event
+  const getEventPhaseInfo = () => {
+    if (!activeEvent) return null;
+    
+    const now = new Date();
+    const submissionDeadline = activeEvent.submissionDeadline ? new Date(activeEvent.submissionDeadline) : null;
+    const reviewDeadline = activeEvent.reviewDeadline ? new Date(activeEvent.reviewDeadline) : null;
+    
+    if (submissionDeadline && now < submissionDeadline) {
+      return {
+        phase: "Submission Phase",
+        description: "Submit your projects before the deadline",
+        icon: Upload,
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+        deadline: submissionDeadline,
+      };
+    }
+    
+    if (reviewDeadline && now < reviewDeadline) {
+      return {
+        phase: "Review & Voting Phase",
+        description: "Faculty review and peer voting in progress",
+        icon: Eye,
+        color: "text-purple-600",
+        bgColor: "bg-purple-50",
+        deadline: reviewDeadline,
+      };
+    }
+    
+    if (activeEvent.status === "results_ready" || activeEvent.status === "published") {
+      return {
+        phase: "Results Available",
+        description: "Winners announced and leaderboard published",
+        icon: Trophy,
+        color: "text-green-600",
+        bgColor: "bg-green-50",
+        deadline: null,
+      };
+    }
+    
+    return null;
+  };
+
+  const phaseInfo = getEventPhaseInfo();
 
   return (
     <div className="min-h-screen bg-[#FAFBFC] font-sans">
@@ -117,9 +165,30 @@ export default function Home() {
               Showcase. Evaluate.<br/>
               <span className="text-[#F5A623]">Inspire.</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-light">
+            <p className="text-lg md:text-xl text-gray-300 mb-6 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-light">
               A fair and transparent platform for students to showcase their CS projects, get evaluated by expert faculty, and compete on a level playing field.
             </p>
+            
+            {/* Current Event Phase Badge */}
+            {phaseInfo && (
+              <div className={`inline-flex items-center gap-3 ${phaseInfo.bgColor} rounded-xl px-6 py-4 mb-6`}>
+                <phaseInfo.icon className={`w-6 h-6 ${phaseInfo.color}`} />
+                <div className="text-left">
+                  <div className={`font-bold ${phaseInfo.color}`}>{phaseInfo.phase}</div>
+                  <div className="text-sm text-gray-700">{phaseInfo.description}</div>
+                  {phaseInfo.deadline && (
+                    <div className="text-xs text-gray-600 mt-1">
+                      Deadline: {phaseInfo.deadline.toLocaleDateString("en-US", { 
+                        month: "short", 
+                        day: "numeric", 
+                        year: "numeric" 
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
               <Button
                 size="lg"
@@ -146,7 +215,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Timeline Event Cards */}
+      {/* Active Events Section */}
+      {activeEvents && activeEvents.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-[#0F2A4A]">Active Events</h2>
+            <Button variant="ghost" onClick={() => navigate("/events")} className="text-[#22B8CF]">
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {activeEvents.slice(0, 3).map((event) => (
+              <EventCard key={event.id} event={event} showRegistration={isAuthenticated} compact />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Timeline Event Cards (Legacy) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="shadow-lg border-0 rounded-2xl overflow-hidden hover:-translate-y-1 transition-transform duration-300 col-span-1 md:col-span-2 lg:col-span-1">
@@ -171,7 +257,9 @@ export default function Home() {
                 <p className="font-bold text-gray-900 text-sm">
                   {activeEvent?.submissionDeadline ? new Date(activeEvent.submissionDeadline).toLocaleDateString() : "TBA"}
                 </p>
-                <p className="text-xs font-semibold text-[#2F9E44] mt-1 uppercase tracking-wider">Open</p>
+                <p className="text-xs font-semibold text-[#2F9E44] mt-1 uppercase tracking-wider">
+                  {activeEvent?.submissionDeadline && new Date(activeEvent.submissionDeadline) > new Date() ? "Open" : "Closed"}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -179,14 +267,16 @@ export default function Home() {
           <Card className="shadow-lg border-0 rounded-2xl overflow-hidden hover:-translate-y-1 transition-transform duration-300">
             <CardContent className="p-5 flex gap-4 bg-white items-center h-full">
               <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
-                <Users className="w-6 h-6 text-purple-600" />
+                <Eye className="w-6 h-6 text-purple-600" />
               </div>
               <div>
                 <p className="text-xs font-bold text-[#0F2A4A] mb-1">Review Deadline</p>
                 <p className="font-bold text-gray-900 text-sm">
                   {activeEvent?.reviewDeadline ? new Date(activeEvent.reviewDeadline).toLocaleDateString() : "TBA"}
                 </p>
-                <p className="text-xs font-semibold text-purple-600 mt-1 uppercase tracking-wider">Upcoming</p>
+                <p className="text-xs font-semibold text-purple-600 mt-1 uppercase tracking-wider">
+                  {activeEvent?.reviewDeadline && new Date(activeEvent.reviewDeadline) > new Date() ? "Upcoming" : "Closed"}
+                </p>
               </div>
             </CardContent>
           </Card>

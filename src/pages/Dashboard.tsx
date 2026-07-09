@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
@@ -5,12 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Code2, Trophy, Vote, Calendar, FileEdit, Eye, ArrowRight, GitBranch, BarChart3 } from "lucide-react";
+import { EventSelectionModal } from "@/components/EventSelectionModal";
+import { Code2, Trophy, Vote, Calendar, FileEdit, Eye, ArrowRight, GitBranch, BarChart3, LogOut, Plus } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, logout, isLoading } = useAuth({ redirectOnUnauthenticated: true });
+  
+  // All hooks MUST be declared at the top in consistent order
+  const [eventSelectionOpen, setEventSelectionOpen] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  
+  // Query hooks MUST be called in consistent order (before any early returns)
   const { data: activeEvent } = trpc.event.active.useQuery();
+  const { data: myRegistrations } = trpc.event.myRegistrations.useQuery();
   const { data: myProject, isLoading: projectLoading } = trpc.project.myProject.useQuery(
     { eventId: activeEvent?.id ?? 0 },
     { enabled: !!activeEvent },
@@ -23,6 +32,30 @@ export default function Dashboard() {
     { eventId: activeEvent?.id ?? 0 },
     { enabled: !!activeEvent && activeEvent.status === "published" },
   );
+  
+  // Handle role-based routing based on user type from signup
+  React.useEffect(() => {
+    if (!isLoading && user && !isRedirecting) {
+      // Check if this is a faculty user (has faculty profile OR signed up as faculty)
+      const isIntendedFaculty = user.facultyProfile || (user.raw_user_meta_data?.user_type === "faculty");
+      
+      if (isIntendedFaculty && user.role !== "admin") {
+        // Faculty users should go to faculty dashboard
+        setIsRedirecting(true);
+        navigate("/faculty", { replace: true });
+      }
+      // Student users stay on dashboard (no redirect needed)
+    }
+  }, [isLoading, user, isRedirecting, navigate]);
+
+  // Show loading screen while checking auth or redirecting
+  if (isLoading || isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFBFC]">
@@ -37,40 +70,81 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 hidden md:inline">{user?.name}</span>
-            
+
             {user?.role === "admin" && (
               <Button size="sm" onClick={() => navigate("/admin")} className="bg-[#0F2A4A]">
                 Admin Panel
               </Button>
             )}
-            {(user?.role === "admin" || user?.facultyProfile) && (
-              <Button size="sm" onClick={() => navigate("/faculty")} variant="secondary">
-                Faculty Portal
-              </Button>
-            )}
+            
+            {/* Faculty Portal button completely removed */}
+            
             <Button size="sm" variant="outline" onClick={() => navigate("/projects")}>
-
               <Eye className="w-4 h-4 mr-1" />
               Browse
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={logout}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-1" />
+              Logout
             </Button>
           </div>
         </div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#0F2A4A] mb-2">Student Dashboard</h1>
-          <p className="text-gray-600">
-            {activeEvent ? (
-              <>
-                {activeEvent.name} &middot;{" "}
-                <Badge variant="outline" className="capitalize">
-                  {activeEvent.status?.replace(/_/g, " ")}
-                </Badge>
-              </>
-            ) : "No active event"}
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F2A4A] mb-2">Student Dashboard</h1>
+            <p className="text-gray-600">
+              {activeEvent ? (
+                <>
+                  {activeEvent.name} &middot;{" "}
+                  <Badge variant="outline" className="capitalize">
+                    {activeEvent.status?.replace(/_/g, " ")}
+                  </Badge>
+                </>
+              ) : "No active event"}
+            </p>
+          </div>
+          <Button
+            onClick={() => setEventSelectionOpen(true)}
+            className="bg-[#22B8CF] hover:bg-[#1da8bc] text-[#0F2A4A] font-semibold"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Register for Events
+          </Button>
         </div>
+
+        {/* My Registered Events */}
+        {myRegistrations && myRegistrations.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-[#0F2A4A] mb-3">My Registered Events ({myRegistrations.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myRegistrations.map((event) => (
+                <Card key={event.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-1">{event.name}</h3>
+                    <Badge variant="outline" className="capitalize text-xs mb-3 inline-block">
+                      {event.status?.replace(/_/g, " ")}
+                    </Badge>
+                    <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
+                    {event.submissionDeadline && (
+                      <div className="text-xs text-gray-500 mt-3">
+                        <Calendar className="w-3 h-3 inline mr-1" />
+                        Deadline: {new Date(event.submissionDeadline).toLocaleDateString()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -359,6 +433,14 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        <EventSelectionModal
+          open={eventSelectionOpen}
+          onOpenChange={setEventSelectionOpen}
+          onSelectionComplete={() => {
+            // Refresh registrations
+          }}
+        />
       </div>
     </div>
   );

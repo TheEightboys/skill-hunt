@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import Footer from "@/components/Footer";
 import { Code2, Search, GitBranch, ExternalLink, Vote } from "lucide-react";
 
 export default function ProjectsPage() {
@@ -120,14 +121,25 @@ export default function ProjectsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => {
               const isVotedFor = myVote?.projectId === project.id;
+              // Get the first screenshot as thumbnail, or use gradient fallback
+              const thumbnail = project.screenshots?.[0]?.fileUrl;
+              
               return (
                 <Card
                   key={project.id}
-                  className="group cursor-pointer hover:shadow-lg transition-all border-0 shadow-md overflow-hidden"
+                  className="group cursor-pointer hover:shadow-lg transition-all border-0 shadow-md overflow-hidden flex flex-col h-full"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <div className="h-36 bg-gradient-to-br from-[#0F2A4A] to-[#22B8CF] flex items-center justify-center relative">
-                    <Code2 className="w-10 h-10 text-white/30" />
+                  <div className="h-48 bg-gradient-to-br from-[#0F2A4A] to-[#22B8CF] flex items-center justify-center relative overflow-hidden shrink-0">
+                    {thumbnail ? (
+                      <img 
+                        src={thumbnail} 
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <Code2 className="w-10 h-10 text-white/30" />
+                    )}
                     {project.previewStatus === "live" && (
                       <Badge className="absolute top-3 right-3 bg-green-500 text-white text-xs">
                         <ExternalLink className="w-3 h-3 mr-1" />
@@ -135,7 +147,7 @@ export default function ProjectsPage() {
                       </Badge>
                     )}
                   </div>
-                  <CardContent className="p-5">
+                  <CardContent className="p-5 flex-1 flex flex-col">
                     <div className="flex items-start justify-between mb-2">
                       <Badge variant="secondary" className="text-xs">{project.category}</Badge>
                       {isVotedFor && (
@@ -145,11 +157,11 @@ export default function ProjectsPage() {
                         </Badge>
                       )}
                     </div>
-                    <h3 className="font-semibold text-[#0F2A4A] mb-2 line-clamp-1 group-hover:text-[#22B8CF] transition-colors">
+                    <h3 className="font-semibold text-[#0F2A4A] mb-2 line-clamp-2 group-hover:text-[#22B8CF] transition-colors">
                       {project.title}
                     </h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">{project.abstract}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-400">
+                    <p className="text-sm text-gray-500 line-clamp-4 mb-4 flex-1">{project.abstract}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-400 mt-auto pt-3 border-t border-gray-100">
                       <div className="flex items-center gap-3">
                         {project.githubUrl && (
                           <span className="flex items-center gap-1">
@@ -183,6 +195,9 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

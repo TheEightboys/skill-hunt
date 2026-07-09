@@ -74,6 +74,26 @@ export const projectRouter = createRouter({
     .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
       const { teamMembers, screenshots, tags, ...projectData } = input;
 
+      // Guard: Block submission if event is closed or deadline has passed
+      const event = await getDb().query.events.findFirst({
+        where: eq(schema.events.id, input.eventId),
+      });
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
+      }
+      const closedStatuses = ["review_and_voting_open", "results_ready", "published", "archived"];
+      if (closedStatuses.includes(event.status)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Submissions are closed for this event. The event is no longer accepting new projects.",
+        });
+      }
+      if (event.submissionDeadline && new Date(event.submissionDeadline) < new Date()) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "The submission deadline for this event has passed.",
+        });
+      }
       // Check if student already has a project for this event
       const existing = await projectService.getStudentProjectForEvent(
         ctx.user.id,

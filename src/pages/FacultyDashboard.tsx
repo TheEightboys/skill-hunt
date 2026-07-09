@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
@@ -12,8 +13,32 @@ import { Code2, Star, ClipboardCheck, ArrowRight, BarChart3, Clock, ShieldCheck 
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
-  const { user, isLoading, refresh } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, isLoading, refresh } = useAuth({ redirectOnUnauthenticated: false });
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const utils = trpc.useUtils();
+  
+  // Handle authentication and faculty checks
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      // Redirect unauthenticated users to login
+      navigate("/login");
+      return;
+    }
+  }, [isLoading, user, navigate]);
+  
+  // Redirect non-faculty users away from faculty dashboard
+  React.useEffect(() => {
+    if (!isLoading && user) {
+      // Check if user is intended to be faculty (has profile OR signed up as faculty)
+      const isIntendedFaculty = user.facultyProfile || (user.raw_user_meta_data?.user_type === "faculty");
+      
+      if (!isIntendedFaculty && user.role !== "admin") {
+        // Not intended faculty, redirect to dashboard
+        setIsRedirecting(true);
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [isLoading, user, navigate]);
   
   const [name, setName] = useState(user?.name || "");
   const [department, setDepartment] = useState("");
@@ -41,6 +66,15 @@ export default function FacultyDashboard() {
   const progress = totalProjects > 0 ? (submittedCount / totalProjects) * 100 : 0;
 
   if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Prevent rendering during redirect
+  if (isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -135,7 +169,20 @@ export default function FacultyDashboard() {
             </div>
             <span className="font-bold text-lg text-[#0F2A4A]">Faculty Dashboard</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            {activeEvent && (
+              <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                Reviewing: {activeEvent.name}
+              </Badge>
+            )}
+            
+            {/* Show Request Access button for faculty who signed up but haven't applied */}
+            {!user?.facultyProfile && user?.raw_user_meta_data?.user_type === "faculty" && (
+              <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                Request Faculty Access
+              </Button>
+            )}
+            
             <Button size="sm" variant="outline" onClick={() => navigate("/dashboard")}>
               Exit Dashboard
             </Button>

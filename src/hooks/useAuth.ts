@@ -31,7 +31,8 @@ export function useAuth(options?: UseAuthOptions) {
     onSuccess: async () => {
       await supabase.auth.signOut();
       await utils.invalidate();
-      navigate(redirectPath);
+      // Replace history so back/forward arrow cannot return to the dashboard
+      window.location.replace("/");
     },
   });
 

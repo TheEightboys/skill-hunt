@@ -57,18 +57,29 @@ function requireRole(role: string) {
 export const authedQuery = t.procedure.use(requireAuth);
 export const adminQuery = authedQuery.use(requireRole("admin"));
 
+import { getDb } from "./queries/connection.js";
+import * as schema from "../db/schema.js";
+
 // Helper to check student profile exists
 const requireStudentProfile = t.middleware(async (opts) => {
   const { ctx, next } = opts;
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: ErrorMessages.unauthenticated });
   }
-  
+
   // Admins bypass profile checks
   if (ctx.user.role !== "admin" && !ctx.user.studentProfile) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Student profile required" });
+    try {
+      const db = getDb();
+      await db.insert(schema.studentProfiles).values({
+        userId: ctx.user.id,
+      }).onConflictDoNothing();
+      ctx.user.studentProfile = { userId: ctx.user.id } as any;
+    } catch (err) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Student profile required" });
+    }
   }
-  
+
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 
@@ -77,7 +88,7 @@ const requireFacultyProfile = t.middleware(async (opts) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: ErrorMessages.unauthenticated });
   }
-  
+
   // Admins bypass profile checks
   if (ctx.user.role !== "admin") {
     if (!ctx.user.facultyProfile) {
@@ -87,7 +98,7 @@ const requireFacultyProfile = t.middleware(async (opts) => {
       throw new TRPCError({ code: "FORBIDDEN", message: "Faculty profile pending verification" });
     }
   }
-  
+
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 

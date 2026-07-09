@@ -12,6 +12,36 @@ export const eventRouter = createRouter({
     return eventService.getActiveEvent();
   }),
 
+  activeEvents: publicQuery.input(z.any().optional()).query(async () => {
+    return eventService.getActiveEvents();
+  }),
+
+  completed: publicQuery.input(z.any().optional()).query(async () => {
+    return eventService.getCompletedEvents();
+  }),
+
+  myRegistrations: authedQuery.input(z.any().optional()).query(async ({ ctx }) => {
+    return eventService.getUserEventRegistrations(ctx.user.id);
+  }),
+
+  register: authedQuery
+    .input(z.object({ eventId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return eventService.registerUserForEvent(ctx.user.id, input.eventId);
+    }),
+
+  unregister: authedQuery
+    .input(z.object({ eventId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return eventService.unregisterUserFromEvent(ctx.user.id, input.eventId);
+    }),
+
+  registrationCount: publicQuery
+    .input(z.object({ eventId: z.number() }))
+    .query(async ({ input }) => {
+      return eventService.getEventRegistrationCount(input.eventId);
+    }),
+
   bySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
@@ -85,6 +115,7 @@ export const eventRouter = createRouter({
         ]).optional(),
         isActive: z.boolean().optional(),
         isPublic: z.boolean().optional(),
+        isCompleted: z.boolean().optional(),
         registrationStartAt: z.string().datetime().optional(),
         submissionDeadline: z.string().datetime().optional(),
         votingStartAt: z.string().datetime().optional(),
@@ -105,6 +136,12 @@ export const eventRouter = createRouter({
         updateData.reviewDeadline = new Date(data.reviewDeadline);
 
       return eventService.updateEvent(id, updateData);
+    }),
+
+  complete: adminQuery
+    .input(z.object({ eventId: z.number() }))
+    .mutation(async ({ input }) => {
+      return eventService.completeEvent(input.eventId);
     }),
 
   stats: authedQuery

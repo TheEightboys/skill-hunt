@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { getDb } from "../queries/connection.js";
 import * as schema from "../../db/schema.js";
 import { DEFAULT_RUBRIC_CRITERIA } from "../../contracts/constants.js";
@@ -7,6 +7,26 @@ import type { InsertEvent } from "../../db/schema.js";
 export async function getAllEvents() {
   return getDb().query.events.findMany({
     orderBy: [desc(schema.events.createdAt)],
+  });
+}
+
+export async function getActiveEvents() {
+  const db = getDb();
+  const now = new Date();
+  
+  return db.query.events.findMany({
+    where: and(
+      eq(schema.events.isPublic, true),
+      eq(schema.events.isCompleted, false)
+    ),
+    orderBy: [desc(schema.events.registrationStartAt)],
+  });
+}
+
+export async function getCompletedEvents() {
+  return getDb().query.events.findMany({
+    where: eq(schema.events.isCompleted, true),
+    orderBy: [desc(schema.events.completedAt)],
   });
 }
 
@@ -122,6 +142,79 @@ export async function publishEventResults(eventId: number) {
     .where(eq(schema.projectScoreSnapshots.eventId, eventId));
 
   return getEventById(eventId);
+}
+
+export async function completeEvent(eventId: number) {
+  await getDb()
+    .update(schema.events)
+    .set({
+      status: "archived",
+      isActive: false,
+      isCompleted: true,
+      completedAt: new Date(),
+    })
+    .where(eq(schema.events.id, eventId));
+
+  return getEventById(eventId);
+}
+
+export async function getUserEventRegistrations(userId: number) {
+  const db = getDb();
+  
+  const registrations = await db.query.eventRegistrations.findMany({
+    where: eq(schema.eventRegistrations.userId, userId),
+    with: {
+      event: true,
+    },
+  });
+
+  return registrations.map(r => r.event);
+}
+
+export async function registerUserForEvent(userId: number, eventId: number) {
+  const db = getDb();
+  
+  // Check if already registered
+  const existing = await db.query.eventRegistrations.findFirst({
+    where: and(
+      eq(schema.eventRegistrations.userId, userId),
+      eq(schema.eventRegistrations.eventId, eventId)
+    ),
+  });
+
+  if (existing) {
+    return { alreadyRegistered: true };
+  }
+
+  await db.insert(schema.eventRegistrations).values({
+    userId,
+    eventId,
+  });
+
+  return { success: true };
+}
+
+export async function unregisterUserFromEvent(userId: number, eventId: number) {
+  const db = getDb();
+  
+  await db.delete(schema.eventRegistrations)
+    .where(and(
+      eq(schema.eventRegistrations.userId, userId),
+      eq(schema.eventRegistrations.eventId, eventId)
+    ));
+
+  return { success: true };
+}
+
+export async function getEventRegistrationCount(eventId: number) {
+  const db = getDb();
+  
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.eventRegistrations)
+    .where(eq(schema.eventRegistrations.eventId, eventId));
+
+  return result?.count ?? 0;
 }
 
 export async function getEventStats(eventId: number) {

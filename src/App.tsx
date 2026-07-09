@@ -11,6 +11,8 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import ResultsPage from "./pages/ResultsPage";
 import AdminPage from "./pages/AdminPage";
 import FacultyDashboard from "./pages/FacultyDashboard";
+import EventsPage from "./pages/EventsPage";
+import About from "./pages/About";
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
       <Route path="/review/:projectId" element={<ReviewPage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/results" element={<ResultsPage />} />
+      <Route path="/events" element={<EventsPage />} />
+      <Route path="/about" element={<About />} />
       <Route path="/faculty" element={<FacultyDashboard />} />
       <Route path="/admin" element={<AdminPage />} />
       <Route path="*" element={<NotFound />} />

@@ -18,6 +18,7 @@ import {
   notifications,
   previewChecks,
   githubSyncLogs,
+  eventRegistrations,
 } from "./schema.js";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -33,6 +34,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   facultyReviews: many(facultyReviews),
   peerVotes: many(peerVotes),
   notifications: many(notifications),
+  eventRegistrations: many(eventRegistrations),
 }));
 
 export const studentProfilesRelations = relations(studentProfiles, ({ one }) => ({
@@ -59,6 +61,7 @@ export const eventsRelations = relations(events, ({ many, one }) => ({
   facultyReviews: many(facultyReviews),
   peerVotes: many(peerVotes),
   scoreSnapshots: many(projectScoreSnapshots),
+  registrations: many(eventRegistrations),
 }));
 
 export const eventScoreConfigsRelations = relations(eventScoreConfigs, ({ one }) => ({
@@ -198,5 +201,16 @@ export const githubSyncLogsRelations = relations(githubSyncLogs, ({ one }) => ({
   project: one(projects, {
     fields: [githubSyncLogs.projectId],
     references: [projects.id],
+  }),
+}));
+
+export const eventRegistrationsRelations = relations(eventRegistrations, ({ one }) => ({
+  user: one(users, {
+    fields: [eventRegistrations.userId],
+    references: [users.id],
+  }),
+  event: one(events, {
+    fields: [eventRegistrations.eventId],
+    references: [events.id],
   }),
 }));

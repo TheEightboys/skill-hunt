@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import Footer from "@/components/Footer";
 import { Code2, GitBranch, ExternalLink, Users, ArrowLeft, Vote, Calendar, Star, FileEdit } from "lucide-react";
 
 export default function ProjectDetail() {
@@ -288,6 +289,9 @@ export default function ProjectDetail() {
           </>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

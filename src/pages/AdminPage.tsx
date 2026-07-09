@@ -7,6 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Code2,
   Users,
@@ -54,17 +63,17 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  const { data: stats } = trpc.event.dashboardStats.useQuery();
-  const { data: activeEvent } = trpc.event.active.useQuery();
+  const { data: stats } = trpc.event.dashboardStats.useQuery(undefined);
+  const { data: activeEvent } = trpc.event.active.useQuery(undefined);
   const { data: eventStats } = trpc.event.stats.useQuery(
     { eventId: activeEvent?.id ?? 0 },
     { enabled: !!activeEvent },
   );
-  
-  const { data: allUsers } = trpc.admin.users.useQuery();
-  const { data: pendingFaculty } = trpc.admin.pendingFaculty.useQuery();
+
+  const { data: allUsers } = trpc.admin.users.useQuery(undefined);
+  const { data: pendingFaculty } = trpc.admin.pendingFaculty.useQuery(undefined);
   const { data: projects } = trpc.project.list.useQuery();
-  const { data: events } = trpc.admin.events.useQuery();
+  const { data: events } = trpc.admin.events.useQuery(undefined);
   const { data: evaluations } = trpc.admin.evaluations.useQuery({ eventId: activeEvent?.id ?? 0 }, { enabled: !!activeEvent });
   const { data: votes } = trpc.admin.votes.useQuery({ eventId: activeEvent?.id ?? 0 }, { enabled: !!activeEvent });
   const { data: leaderboardPreview } = trpc.leaderboard.preview.useQuery(
@@ -83,8 +92,8 @@ export default function AdminPage() {
         return;
       }
       const headers = Object.keys(data[0]).join(",");
-      const rows = data.map((row) => 
-        Object.values(row).map(val => 
+      const rows = data.map((row) =>
+        Object.values(row).map(val =>
           typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
         ).join(",")
       );
@@ -116,6 +125,49 @@ export default function AdminPage() {
     onSuccess: () => {
       utils.admin.pendingFaculty.invalidate();
     },
+  });
+
+  // Modal local states
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [editUserRole, setEditUserRole] = useState<"admin" | "user">("user");
+  const [editUserStatus, setEditUserStatus] = useState<"pending" | "active" | "rejected" | "disabled">("active");
+  const updateUserMutation = trpc.admin.updateUser.useMutation({
+    onSuccess: () => {
+      utils.admin.users.invalidate();
+      setEditingUserId(null);
+    }
+  });
+
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [eventForm, setEventForm] = useState({
+    name: "", slug: "", description: "", status: "draft" as any,
+    registrationStartAt: "", submissionDeadline: "", votingStartAt: "", reviewDeadline: "",
+    isActive: false,
+  });
+
+  const buildEventPayload = () => {
+    const { registrationStartAt, submissionDeadline, votingStartAt, reviewDeadline, ...rest } = eventForm;
+    return {
+      ...rest,
+      ...(registrationStartAt ? { registrationStartAt: new Date(registrationStartAt).toISOString() } : {}),
+      ...(submissionDeadline ? { submissionDeadline: new Date(submissionDeadline).toISOString() } : {}),
+      ...(votingStartAt ? { votingStartAt: new Date(votingStartAt).toISOString() } : {}),
+      ...(reviewDeadline ? { reviewDeadline: new Date(reviewDeadline).toISOString() } : {}),
+    };
+  };
+
+  const createEventMutation = trpc.event.create.useMutation({
+    onSuccess: () => {
+      utils.admin.events.invalidate();
+      setIsCreateEventOpen(false);
+    }
+  });
+  const updateEventMutation = trpc.event.update.useMutation({
+    onSuccess: () => {
+      utils.admin.events.invalidate();
+      setEditingEventId(null);
+    }
   });
 
   const { user, isLoading } = useAuth({ redirectOnUnauthenticated: true });
@@ -190,10 +242,10 @@ export default function AdminPage() {
               </div>
             </div>
           </header>
-          
+
           <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
             <div className="max-w-[1400px] mx-auto animate-in fade-in duration-300">
-              
+
               {/* DASHBOARD TAB */}
               {activeTab === "dashboard" && (
                 <div className="space-y-6">
@@ -206,7 +258,7 @@ export default function AdminPage() {
                             <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Events</p>
                             <p className="text-4xl font-bold text-[#0F2A4A] mt-2">{stats?.totalEvents ?? 0}</p>
                           </div>
-                          <div className="p-3 rounded-xl bg-[#0F2A4A]/10 text-[#0F2A4A]"><Calendar className="w-6 h-6"/></div>
+                          <div className="p-3 rounded-xl bg-[#0F2A4A]/10 text-[#0F2A4A]"><Calendar className="w-6 h-6" /></div>
                         </div>
                       </CardContent>
                     </Card>
@@ -218,7 +270,7 @@ export default function AdminPage() {
                             <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Events</p>
                             <p className="text-4xl font-bold text-[#22B8CF] mt-2">{stats?.activeEvents ?? 0}</p>
                           </div>
-                          <div className="p-3 rounded-xl bg-[#22B8CF]/10 text-[#22B8CF]"><BarChart3 className="w-6 h-6"/></div>
+                          <div className="p-3 rounded-xl bg-[#22B8CF]/10 text-[#22B8CF]"><BarChart3 className="w-6 h-6" /></div>
                         </div>
                       </CardContent>
                     </Card>
@@ -230,7 +282,7 @@ export default function AdminPage() {
                             <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Students</p>
                             <p className="text-4xl font-bold text-[#2F9E44] mt-2">{stats?.totalStudents ?? 0}</p>
                           </div>
-                          <div className="p-3 rounded-xl bg-[#2F9E44]/10 text-[#2F9E44]"><Users className="w-6 h-6"/></div>
+                          <div className="p-3 rounded-xl bg-[#2F9E44]/10 text-[#2F9E44]"><Users className="w-6 h-6" /></div>
                         </div>
                       </CardContent>
                     </Card>
@@ -242,7 +294,7 @@ export default function AdminPage() {
                             <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Faculty</p>
                             <p className="text-4xl font-bold text-[#F5A623] mt-2">{stats?.totalFaculty ?? 0}</p>
                           </div>
-                          <div className="p-3 rounded-xl bg-[#F5A623]/10 text-[#F5A623]"><Star className="w-6 h-6"/></div>
+                          <div className="p-3 rounded-xl bg-[#F5A623]/10 text-[#F5A623]"><Star className="w-6 h-6" /></div>
                         </div>
                       </CardContent>
                     </Card>
@@ -364,9 +416,9 @@ export default function AdminPage() {
                               </td>
                               <td className="p-4">
                                 <Badge variant="outline" className={`
-                                  ${u.role === "admin" ? "bg-purple-50 text-purple-700 border-purple-200" : 
-                                    u.role === "faculty" ? "bg-amber-50 text-amber-700 border-amber-200" : 
-                                    "bg-blue-50 text-blue-700 border-blue-200"}
+                                  ${u.role === "admin" ? "bg-purple-50 text-purple-700 border-purple-200" :
+                                    u.role === "faculty" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                      "bg-blue-50 text-blue-700 border-blue-200"}
                                 `}>
                                   {u.role}
                                 </Badge>
@@ -380,7 +432,18 @@ export default function AdminPage() {
                                 {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}
                               </td>
                               <td className="p-4 pr-6 text-right">
-                                <Button variant="ghost" size="sm" className="text-[#0F2A4A] hover:bg-[#0F2A4A]/10">Edit</Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-[#0F2A4A] hover:bg-[#0F2A4A]/10"
+                                  onClick={() => {
+                                    setEditUserRole(u.role as "admin" | "user");
+                                    setEditUserStatus(u.accountStatus as any);
+                                    setEditingUserId(u.id);
+                                  }}
+                                >
+                                  Edit
+                                </Button>
                               </td>
                             </tr>
                           ))}
@@ -450,28 +513,37 @@ export default function AdminPage() {
                       <h2 className="text-2xl font-bold text-[#0F2A4A]">Event Management</h2>
                       <p className="text-gray-500 mt-1">Create and manage hackathons, showcases, and exhibitions.</p>
                     </div>
-                    <Button className="bg-[#0F2A4A] hover:bg-[#0d223d] shadow-sm">
-                      <Calendar className="w-4 h-4 mr-2"/>
+                    <Button
+                      className="bg-[#0F2A4A] hover:bg-[#0d223d] shadow-sm"
+                      onClick={() => {
+                        setEventForm({ name: "", slug: "", description: "", status: "draft", registrationStartAt: "", submissionDeadline: "", votingStartAt: "", reviewDeadline: "", isActive: false });
+                        setIsCreateEventOpen(true);
+                      }}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
                       Create New Event
                     </Button>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {events?.map((e: any) => (
-                      <Card key={e.id} className={`overflow-hidden border-none shadow-md transition-all hover:shadow-lg ${e.isActive ? 'ring-2 ring-[#22B8CF] ring-offset-2' : ''}`}>
-                        <div className={`h-2 w-full ${e.isActive ? 'bg-gradient-to-r from-[#22B8CF] to-[#0F2A4A]' : 'bg-gray-200'}`} />
+                      <Card key={e.id} className={`overflow-hidden border-none shadow-md transition-all hover:shadow-lg ${e.isActive ? 'ring-2 ring-[#22B8CF] ring-offset-2' : e.isCompleted ? 'opacity-75' : ''}`}>
+                        <div className={`h-2 w-full ${e.isActive ? 'bg-gradient-to-r from-[#22B8CF] to-[#0F2A4A]' : e.isCompleted ? 'bg-gray-300' : 'bg-gray-200'}`} />
                         <CardHeader className="pb-3 bg-white">
-                          <div className="flex justify-between items-start mb-3">
+                          <div className="flex justify-between items-start mb-3 gap-2">
                             <Badge variant="outline" className={`uppercase tracking-wider text-[10px] ${e.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
                               {e.status.replace(/_/g, ' ')}
                             </Badge>
-                            {e.isActive && <Badge className="bg-[#0F2A4A] text-white shadow-sm border-0">Active Event</Badge>}
+                            <div className="flex items-center gap-2">
+                              {e.isActive && !e.isCompleted && <Badge className="bg-[#0F2A4A] text-white shadow-sm border-0">Active</Badge>}
+                              {e.isCompleted && <Badge className="bg-gray-500 text-white shadow-sm border-0">Completed</Badge>}
+                            </div>
                           </div>
                           <CardTitle className="text-xl leading-tight text-gray-900">{e.name}</CardTitle>
                         </CardHeader>
                         <CardContent className="bg-gray-50/50 pt-4 border-t border-gray-100">
                           <p className="text-sm text-gray-600 mb-5 line-clamp-2 min-h-[40px]">{e.description}</p>
-                          
+
                           <div className="bg-white p-3 rounded-lg border border-gray-100 mb-5 space-y-2">
                             <div className="flex justify-between items-center text-xs">
                               <span className="text-gray-500 font-medium">Registration</span>
@@ -482,11 +554,58 @@ export default function AdminPage() {
                               <span className="text-gray-500 font-medium">Submission Due</span>
                               <span className="text-red-600 font-bold">{e.submissionDeadline ? new Date(e.submissionDeadline).toLocaleDateString() : 'TBA'}</span>
                             </div>
+                            {e.isCompleted && e.completedAt && (
+                              <>
+                                <Separator />
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-500 font-medium">Completed On</span>
+                                  <span className="text-gray-700 font-semibold">{new Date(e.completedAt).toLocaleDateString()}</span>
+                                </div>
+                              </>
+                            )}
                           </div>
-                          
-                          <div className="flex gap-3">
-                            <Button variant="outline" className="flex-1 bg-white shadow-sm hover:bg-gray-50">Edit</Button>
-                            <Button className="flex-1 bg-gray-900 hover:bg-gray-800 shadow-sm text-white">Manage</Button>
+
+                          <div className="flex gap-2 flex-col">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                className="flex-1 bg-white shadow-sm hover:bg-gray-50"
+                                onClick={() => {
+                                  setEventForm({
+                                    name: e.name,
+                                    slug: e.slug,
+                                    description: e.description || "",
+                                    status: e.status,
+                                    registrationStartAt: e.registrationStartAt ? new Date(e.registrationStartAt).toISOString().slice(0, 16) : "",
+                                    submissionDeadline: e.submissionDeadline ? new Date(e.submissionDeadline).toISOString().slice(0, 16) : "",
+                                    votingStartAt: e.votingStartAt ? new Date(e.votingStartAt).toISOString().slice(0, 16) : "",
+                                    reviewDeadline: e.reviewDeadline ? new Date(e.reviewDeadline).toISOString().slice(0, 16) : "",
+                                    isActive: e.isActive || false,
+                                  });
+                                  setEditingEventId(e.id);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              {!e.isCompleted && e.status === "published" && (
+                                <Button
+                                  variant="outline"
+                                  className="bg-white shadow-sm hover:bg-gray-100 border-gray-300"
+                                  onClick={() => {
+                                    if (window.confirm(`Mark "${e.name}" as completed? This will archive it and move it to the Previous Events list.`)) {
+                                      updateEventMutation.mutate({ 
+                                        id: e.id, 
+                                        isCompleted: true,
+                                        status: "archived"
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Complete
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -642,12 +761,11 @@ export default function AdminPage() {
                               <tr key={entry.projectId} className={`hover:bg-amber-50/30 transition-colors ${entry.rank === 1 ? 'bg-amber-50/60' : ''}`}>
                                 <td className="p-5 text-center">
                                   {entry.isRanked ? (
-                                    <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full font-black text-lg shadow-sm ${
-                                      entry.rank === 1 ? 'bg-gradient-to-br from-amber-300 to-amber-500 text-white shadow-amber-200' : 
-                                      entry.rank === 2 ? 'bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800' : 
-                                      entry.rank === 3 ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' : 
-                                      'bg-gray-100 text-gray-600 border border-gray-200'
-                                    }`}>
+                                    <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full font-black text-lg shadow-sm ${entry.rank === 1 ? 'bg-gradient-to-br from-amber-300 to-amber-500 text-white shadow-amber-200' :
+                                      entry.rank === 2 ? 'bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800' :
+                                        entry.rank === 3 ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' :
+                                          'bg-gray-100 text-gray-600 border border-gray-200'
+                                      }`}>
                                       {entry.rank}
                                     </div>
                                   ) : (
@@ -735,7 +853,7 @@ export default function AdminPage() {
                           <Badge className="bg-[#0F2A4A] shadow-sm">Live</Badge>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                           <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Submission Deadline</Label>
@@ -750,9 +868,9 @@ export default function AdminPage() {
                           </p>
                         </div>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       <div>
                         <h4 className="font-bold text-gray-900 mb-4 text-lg">Scoring Algorithm Weights</h4>
                         <div className="space-y-3">
@@ -801,7 +919,7 @@ export default function AdminPage() {
                           <div className="text-xs text-gray-500 mt-0.5">Recalculate leaderboard matrix immediately</div>
                         </div>
                       </Button>
-                      
+
                       <Button
                         className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-green-200 hover:border-green-300 shadow-sm bg-white hover:bg-green-50"
                         variant="ghost"
@@ -815,7 +933,7 @@ export default function AdminPage() {
                           <div className="text-xs text-green-600/70 mt-0.5">Make the final leaderboard visible to all students</div>
                         </div>
                       </Button>
-                      
+
                       <Button onClick={handleExportCSV} className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-blue-200 hover:border-blue-300 shadow-sm bg-white hover:bg-blue-50" variant="ghost">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                           <BarChart3 className="w-5 h-5 text-blue-600" />
@@ -825,9 +943,9 @@ export default function AdminPage() {
                           <div className="text-xs text-blue-600/70 mt-0.5">Download all data for external systems</div>
                         </div>
                       </Button>
-                      
+
                       <Separator className="my-6" />
-                      
+
                       <Button onClick={() => alert("Event purging is disabled in this demo environment to protect data integrity.")} className="w-full justify-start gap-4 h-16 p-4 rounded-xl border border-red-200 hover:border-red-300 shadow-sm bg-white hover:bg-red-50" variant="ghost">
                         <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                           <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -841,10 +959,174 @@ export default function AdminPage() {
                   </Card>
                 </div>
               )}
-              
+
             </div>
           </main>
         </SidebarInset>
+
+        <Dialog open={isCreateEventOpen} onOpenChange={setIsCreateEventOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Event</DialogTitle>
+              <DialogDescription>Define a new event. It will be created as a draft by default.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-2">
+                <Label>Event Name</Label>
+                <Input value={eventForm.name} onChange={(e) => setEventForm({ ...eventForm, name: e.target.value })} placeholder="e.g. Spring Hackathon 2026" />
+              </div>
+              <div className="space-y-2">
+                <Label>URL Slug</Label>
+                <Input value={eventForm.slug} onChange={(e) => setEventForm({ ...eventForm, slug: e.target.value })} placeholder="e.g. spring-hackathon-2026" />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} placeholder="Short description..." />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Registration Start</Label>
+                  <Input type="datetime-local" value={eventForm.registrationStartAt} onChange={(e) => setEventForm({ ...eventForm, registrationStartAt: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Submission Deadline</Label>
+                  <Input type="datetime-local" value={eventForm.submissionDeadline} onChange={(e) => setEventForm({ ...eventForm, submissionDeadline: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Voting Start</Label>
+                  <Input type="datetime-local" value={eventForm.votingStartAt} onChange={(e) => setEventForm({ ...eventForm, votingStartAt: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Review Deadline</Label>
+                  <Input type="datetime-local" value={eventForm.reviewDeadline} onChange={(e) => setEventForm({ ...eventForm, reviewDeadline: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateEventOpen(false)}>Cancel</Button>
+              <Button onClick={() => createEventMutation.mutate(buildEventPayload())} disabled={createEventMutation.isPending || !eventForm.name || !eventForm.slug}>
+                Create Event
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editingEventId !== null} onOpenChange={(open) => !open && setEditingEventId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Event</DialogTitle>
+              <DialogDescription>Update the event details.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-2">
+                <Label>Event Name</Label>
+                <Input value={eventForm.name} onChange={(e) => setEventForm({ ...eventForm, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>URL Slug</Label>
+                <Input value={eventForm.slug} onChange={(e) => setEventForm({ ...eventForm, slug: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input value={eventForm.description} onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={eventForm.status}
+                  onChange={(e) => setEventForm({ ...eventForm, status: e.target.value as any })}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="registration_open">Registration Open</option>
+                  <option value="submission_open">Submission Open</option>
+                  <option value="review_and_voting_open">Review & Voting Open</option>
+                  <option value="results_ready">Results Ready</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={eventForm.isActive || false}
+                    onChange={(e) => setEventForm({ ...eventForm, isActive: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  Set as Active Event
+                </Label>
+                <p className="text-xs text-gray-500">Only one event should be active at a time. This will be the primary event shown across the site.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Registration Start</Label>
+                  <Input type="datetime-local" value={eventForm.registrationStartAt} onChange={(e) => setEventForm({ ...eventForm, registrationStartAt: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Submission Deadline</Label>
+                  <Input type="datetime-local" value={eventForm.submissionDeadline} onChange={(e) => setEventForm({ ...eventForm, submissionDeadline: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Voting Start</Label>
+                  <Input type="datetime-local" value={eventForm.votingStartAt} onChange={(e) => setEventForm({ ...eventForm, votingStartAt: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Review Deadline</Label>
+                  <Input type="datetime-local" value={eventForm.reviewDeadline} onChange={(e) => setEventForm({ ...eventForm, reviewDeadline: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingEventId(null)}>Cancel</Button>
+              <Button onClick={() => updateEventMutation.mutate({ id: editingEventId!, ...buildEventPayload() })} disabled={updateEventMutation.isPending || !eventForm.name}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editingUserId !== null} onOpenChange={(open) => !open && setEditingUserId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit User Roles & Status</DialogTitle>
+              <DialogDescription>Modify permissions for this user.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={editUserRole}
+                  onChange={(e) => setEditUserRole(e.target.value as any)}
+                >
+                  <option value="user">User / Student</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Account Status</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={editUserStatus}
+                  onChange={(e) => setEditUserStatus(e.target.value as any)}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingUserId(null)}>Cancel</Button>
+              <Button onClick={() => updateUserMutation.mutate({ id: editingUserId!, role: editUserRole, accountStatus: editUserStatus })} disabled={updateUserMutation.isPending}>
+                Update User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </SidebarProvider>
   );

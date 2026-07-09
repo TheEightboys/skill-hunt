@@ -112,11 +112,13 @@ export const events = pgTable("events", {
     .notNull(),
   isActive: boolean("isActive").default(false).notNull(),
   isPublic: boolean("isPublic").default(false).notNull(),
+  isCompleted: boolean("isCompleted").default(false).notNull(),
   registrationStartAt: timestamp("registrationStartAt"),
   submissionDeadline: timestamp("submissionDeadline"),
   votingStartAt: timestamp("votingStartAt"),
   reviewDeadline: timestamp("reviewDeadline"),
   resultsPublishedAt: timestamp("resultsPublishedAt"),
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -153,6 +155,19 @@ export const rubricCriteria = pgTable("rubric_criteria", {
 
 export type RubricCriterion = typeof rubricCriteria.$inferSelect;
 export type InsertRubricCriterion = typeof rubricCriteria.$inferInsert;
+
+// ─── Event Registrations ─────────────────────────────────────────────
+export const eventRegistrations = pgTable("event_registrations", {
+  id: serial("id").primaryKey(),
+  userId: bigint("userId", { mode: "number" }).notNull(),
+  eventId: bigint("eventId", { mode: "number" }).notNull(),
+  registeredAt: timestamp("registeredAt").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("user_event_registration_unique").on(table.userId, table.eventId),
+]);
+
+export type EventRegistration = typeof eventRegistrations.$inferSelect;
+export type InsertEventRegistration = typeof eventRegistrations.$inferInsert;
 
 // ─── Projects ────────────────────────────────────────────────────────
 export const projects = pgTable("projects", {

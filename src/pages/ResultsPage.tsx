@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import Footer from "@/components/Footer";
 import { ArrowLeft, Star, MessageSquare, BarChart3, AlertTriangle } from "lucide-react";
 
 export default function ResultsPage() {
@@ -210,6 +211,9 @@ export default function ResultsPage() {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

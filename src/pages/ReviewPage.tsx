@@ -87,6 +87,11 @@ export default function ReviewPage() {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Queue
           </Button>
+          {project && (
+            <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+              Event: {project.event?.name || "Unknown Event"}
+            </Badge>
+          )}
         </div>
       </nav>
 
