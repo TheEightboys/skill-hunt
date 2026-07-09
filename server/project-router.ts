@@ -157,18 +157,14 @@ export const projectRouter = createRouter({
         }
       }
 
-      // Check preview URL if provided
+      // Check preview URL if provided (in background)
       if (projectData.previewUrl) {
-        await checkAndUpdatePreviewStatus(projectId);
+        checkAndUpdatePreviewStatus(projectId).catch(console.error);
       }
 
-      // Sync GitHub metadata if provided
+      // Sync GitHub metadata if provided (in background)
       if (projectData.githubUrl) {
-        try {
-          await syncGithubMetadataForProject(projectId);
-        } catch {
-          // Silently fail for demo - GitHub API rate limits
-        }
+        syncGithubMetadataForProject(projectId).catch(() => {});
       }
 
       return { projectId };
@@ -242,9 +238,9 @@ export const projectRouter = createRouter({
         }
       }
 
-      // Check preview if updated
+      // Check preview if updated (in background)
       if (projectData.previewUrl) {
-        await checkAndUpdatePreviewStatus(id);
+        checkAndUpdatePreviewStatus(id).catch(console.error);
       }
 
       return { success: true };
