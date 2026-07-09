@@ -8,6 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
 import { Code2, GitBranch, ExternalLink, Users, ArrowLeft, Vote, Calendar, Star, FileEdit } from "lucide-react";
 
+const SLUG_THUMBNAILS: Record<string, string> = {
+  "ai-campus-nav":         "/thumbnails/ai-campus-nav.png",
+  "distributed-scheduler": "/thumbnails/distributed-scheduler.png",
+  "collab-code-editor":    "/thumbnails/collab-code-editor.png",
+  "smart-waste-iot":       "/thumbnails/smart-waste-iot.png",
+  "privacy-ml-platform":   "/thumbnails/privacy-ml-platform.png",
+};
+
 export default function ProjectDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -60,6 +68,22 @@ export default function ProjectDetail() {
           </div>
         ) : (
           <>
+            {/* Hero Thumbnail */}
+            {(() => {
+              const heroImg =
+                project.screenshots?.[0]?.fileUrl ??
+                (project.slug ? SLUG_THUMBNAILS[project.slug] : undefined);
+              return heroImg ? (
+                <div className="w-full h-56 md:h-72 rounded-xl overflow-hidden mb-8 shadow-md">
+                  <img
+                    src={heroImg}
+                    alt={project.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : null;
+            })()}
+
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">

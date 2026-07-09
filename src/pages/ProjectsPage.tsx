@@ -23,6 +23,15 @@ function getCardStyle(category?: string | null) {
   return CATEGORY_STYLES[category ?? ""] ?? CATEGORY_STYLES["default"];
 }
 
+// Pre-generated thumbnails for seeded projects (keyed by project slug)
+const SLUG_THUMBNAILS: Record<string, string> = {
+  "ai-campus-nav":       "/thumbnails/ai-campus-nav.png",
+  "distributed-scheduler": "/thumbnails/distributed-scheduler.png",
+  "collab-code-editor":  "/thumbnails/collab-code-editor.png",
+  "smart-waste-iot":     "/thumbnails/smart-waste-iot.png",
+  "privacy-ml-platform": "/thumbnails/privacy-ml-platform.png",
+};
+
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -134,8 +143,10 @@ export default function ProjectsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => {
               const isVotedFor = myVote?.projectId === project.id;
-              // Get the first screenshot as thumbnail, or use gradient fallback
-              const thumbnail = project.screenshots?.[0]?.fileUrl;
+              // Priority: uploaded screenshot > slug-keyed generated thumbnail > gradient
+              const thumbnail =
+                project.screenshots?.[0]?.fileUrl ??
+                (project.slug ? SLUG_THUMBNAILS[project.slug] : undefined);
               
               return (
                 <Card
